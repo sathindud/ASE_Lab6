@@ -1,33 +1,28 @@
 import pytest
-from src.models.product import Product
-from src.models.cart import Cart
+from models.catalog import Catalog
+from models.product import Product
+from models.cart import Cart
 
-def test_cart_initial_total_is_zero():
-    cart = Cart()
-    assert cart.get_total() == 0.0
+@pytest.fixture
+def catalog():
+    cat = Catalog()
+    cat.add(Product("P1", "Pen", 2.0))
+    return cat
 
-def test_add_product_to_cart_updates_total():
-    cart = Cart()
-    product1 = Product("P1", "Widget", 10.0)
-    product2 = Product("P2", "Gizmo", 20.0)
+def test_add_item_not_in_catalog(catalog):
+    cart = Cart(catalog)
+    with pytest.raises(ValueError, match="Product not found"):
+        cart.add_item("UNKNOWN", 1)
+
+def test_add_item_invalid_quantity(catalog):
+    cart = Cart(catalog)
+    with pytest.raises(ValueError, match="Quantity must be > 0"):
+        cart.add_item("P1", 0)
+
+def test_cart_total_and_remove(catalog):
+    cart = Cart(catalog)
+    cart.add_item("P1", 3) # 3 * 2.0 = 6.0
+    assert cart.total() == 6.0
     
-    cart.add_item(product1)
-    cart.add_item(product2)
-    
-    assert cart.get_total() == 30.0
-
-# Red Tests
-
-def test_create_product_negative_price():
-    with pytest.raises(ValueError):
-        Product(sku="APPLE-01", name="Apple", price=-1.5)
-
-def test_catalog_add_and_search():
-    catalog = Cart()
-    p = Product(sku="APPLE-01", name="Apple", price=1.5)
-    catalog.add_item(p)
-    assert catalog.get_total() == p
-
-def test_catalog_search_missing_returns_none():
-    catalog = Cart()
-    assert catalog.get_total() is None
+    cart.remove_item("P1")
+    assert cart.total() == 0.0

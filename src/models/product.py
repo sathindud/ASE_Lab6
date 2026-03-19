@@ -1,7 +1,11 @@
+from dataclasses import dataclass
+
+@dataclass
 class Product:
-    def __init__(self, sku: str, name: str, price: float):
-        if price < 0:
+    sku: str
+    name: str
+    price: float
+    
+    def __post_init__(self):
+        if self.price < 0:
             raise ValueError("Price cannot be negative")
-        self.sku = sku
-        self.name = name
-        self.price = price
